@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Student Performance Report - 2nd Periodic Exam, 2025</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    label, select, input, button {
+      margin: 8px 0;
+      padding: 6px;
+      font-size: 16px;
+    }
+    .error {
+      color: red;
+      margin-top: 15px;
+    }
+    table {
+      border-collapse: collapse;
+      margin-top: 20px;
+      width: 100%;
+    }
+    table, th, td {
+      border: 1px solid #aaa;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+th {
+  background-color: transparent !important;
+  color: white; /* Optional: ensures text remains visible */
+}
+    .details-box {
+      margin-top: 20px;
+    }
+    .details-box p {
+      font-size: 18px;
+      line-height: 1.4;
+      color: white;
+      background-color: #333;
+      padding: 5px;
+      border-radius: 5px;
+      margin: 3px 0;
+      white-space: pre-wrap;
+    }
+    .details-box h3 {
+      color: white;
+      font-size: 22px;
+    }
+    #spinner {
+      display: none;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #555;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <h2>Student Performance Report - 2nd Periodic Exam, 2025</h2>
+  <label for="classSelect">Select Class :</label>
+  <select id="classSelect">
+    <!--<option value="">-- All Classes --</option>-->
+    <option value="Pre-Nursery">Pre-Nursery</option>
+    <option value="Nursery">Nursery</option>
+    <option value="KG">KG</option>
+    <option value="Class I">Class 1</option>
+    <option value="Class II">Class 2</option>
+    <option value="Class III">Class 3</option>
+    <option value="Class IV">Class 4</option>
+    <option value="Class V">Class 5</option>
+    <option value="Class VI">Class 6</option>
+    <option value="Class VII">Class 7</option>
+    <option value="Class VIII">Class 8</option>
+    <option value="Class IX">Class 9</option>
+  </select><br>
+
+  <label for="rollNo">Enter student Roll No:</label><br>
+  <input type="text" id="rollNo" placeholder="e.g., 5"><br>
+  <button id="searchBtn">Search</button>
+
+  <div id="spinner"><div class="loader"></div></div>
+  <div id="result"></div>
+  <div id="studentDetails" class="details-box"></div>
+
+  <script>
+  const webAppUrl = "https://script.google.com/macros/s/AKfycbw9yIf9GEzPRf2QHkBg_yq1RQjqGo1xHIgZ643dxLcrHbt-qnN3t1FR1M40hQf9rPS7dw/exec";
+
+  document.getElementById('searchBtn').addEventListener('click', async () => {
+    const className = document.getElementById('classSelect').value;
+    const rollNo = document.getElementById('rollNo').value.trim();
+    const resultDiv = document.getElementById('result');
+    const studentDetailsDiv = document.getElementById('studentDetails');
+    const spinner = document.getElementById('spinner');
+
+    resultDiv.innerHTML = "";
+    studentDetailsDiv.innerHTML = "";
+
+    if (!rollNo) {
+      resultDiv.innerHTML = '<p class="error">Please enter a student roll number.</p>';
+      return;
+    }
+
+    spinner.style.display = 'block';
+
+    const url = `${webAppUrl}?roll=${encodeURIComponent(rollNo)}${className ? `&class=${encodeURIComponent(className)}` : ''}`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      spinner.style.display = 'none';
+
+      if (data.error) {
+        resultDiv.innerHTML = `<p class="error">${data.error}</p>`;
+      } else {
+        let tableHTML = `
+          <div style="text-align: center; margin-bottom: 20px;">
+          <h1>ꯂꯟꯂꯩꯃ ꯄꯕ꯭ꯂꯤꯛ ꯁ꯭ꯀꯨꯜ</h1>
+          <h1>LANLEIMA PUBLIC SCHOOL</h1>
+          <h2>WAHENG KHUMAN MAMANG LEIKAI, BISHNUPUR DISTRICT-795134</h2>
+        </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Class</th>
+                <th>Roll No.</th>
+              </tr>
+            </thead>
+            <tbody id="studentTableBody">
+        `;
+
+        data.forEach((student, index) => {
+          tableHTML += `
+            <tr>
+              <td><a href="#" data-index="${index}" class="student-link">${student['NAME'] || ''}</a></td>
+              <td>${student['Class'] || ''}</td>
+              <td>${student['ROLL NO'] || ''}</td>
+            </tr>
+          `;
+        });
+
+        tableHTML += '</tbody></table>';
+        resultDiv.innerHTML = tableHTML;
+
+        document.querySelectorAll('.student-link').forEach(link => {
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const index = e.target.getAttribute('data-index');
+            showDetails(data[index]);
+          });
+        });
+      }
+    } catch (err) {
+      spinner.style.display = 'none';
+      console.error(err);
+      resultDiv.innerHTML = '<p class="error">Failed to fetch data.</p>';
+    }
+  });
+
+  function showDetails(student) {
+    const detailsDiv = document.getElementById('studentDetails');
+
+     // Check Fees status
+    if (student['Fees'].toLowerCase() === 'due') {
+      detailsDiv.innerHTML = '<p style="color: red; text-align:center;" class="error">Attention: Please clear your pending dues!</p>';
+      return;
+    } else if (student['Fees'].toLowerCase() !== 'clear'){
+      detailsDiv.innerHTML = '<p class="error">Please contact the school office.</p>';
+      return;
+    }
+    
+    let html = '<h3>Score Card - 2nd Periodic Examination, 2025</h3>';
+
+    // Create a table to display subjects and marks in aligned columns
+    html += `
+      <table style="width:100%; text-align:left; margin-top: 20px; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="padding: 10px; border: 1px solid #ccc; text-align: center;">Subject</th>
+            <th style="padding: 10px; border: 1px solid #ccc; text-align: center;">Marks</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    for (const key in student) {
+      // Ignore non-subject entries like 'Name', 'Class', 'Roll No.'
+      if (student[key] !== null && student[key] !== undefined && key !== 'NAME' && key !== 'Class' && key !== 'ROLL NO' && key !== 'Fees') {
+      let value = student[key];
+      let style = ' text-align: right;';
+      if (key.toLowerCase().includes('percentage') && !isNaN(value)) {
+        value = parseFloat(value).toFixed(2); // Format to 2 decimal places
+      }
+      // Red color for marks below 9
+      if (!isNaN(value) && parseFloat(value) < 9) {
+        style = 'color: red; text-align: right;';
+      }
+      // Highlight 'Failed' RANK
+      if (key.toLowerCase() === 'rank' && typeof value === 'string' && value.toLowerCase() === 'failed') {
+        style = 'color: red; font-weight: bold; text-align: right;';
+      }
+        html += `
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ccc;">${key}</td>
+            <td style="padding: 8px; border: 1px solid #ccc;${style}">${value}</td>
+          </tr>
+        `;
+      }
+    }
+
+    html += '</tbody></table>';
+    detailsDiv.innerHTML = html;
+  }
+</script>
+
+</body>
+</html>
