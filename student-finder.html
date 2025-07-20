@@ -1,0 +1,138 @@
+<html>
+<head>
+  <title>Student Finder</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    label, select, input, button {
+      margin: 8px 0;
+      padding: 6px;
+      font-size: 16px;
+    }
+    table {
+      border-collapse: collapse;
+      margin-top: 20px;
+      width: 100%;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border: 1px solid #aaa;
+      white-space: nowrap;
+    }
+    th {
+      background-color: transparent;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      margin-top: 15px;
+    }
+
+    /* Spinner Styles */
+    .spinner {
+      display: none;
+      margin: 20px auto;
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #3498db;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <h2>Lanleima Public School, Waheng Khuman Mamang Leikai</h2>
+
+  <label for="classSelect">Select Class to narrow search (Optional):</label>
+  <select id="classSelect">
+    <option value="">All Classes</option>
+    <option value="Pre-Nursery">Pre-Nursery</option>
+    <option value="Nursery">Nursery</option>
+    <option value="KG">KG</option>
+    <option value="Class I">Class 1</option>
+    <option value="Class II">Class 2</option>
+    <option value="Class III">Class 3</option>
+    <option value="Class IV">Class 4</option>
+    <option value="Class V">Class 5</option>
+    <option value="Class VI">Class 6</option>
+    <option value="Class VII">Class 7</option>
+    <option value="Class VIII">Class 8</option>
+    <option value="Class IX">Class 9</option>
+  </select><br />
+
+  <label for="studentName">Enter student name (partial or full):</label><br />
+  <input id="studentName" placeholder="e.g., John" type="text" /><br />
+  <button id="searchBtn">Search</button>
+
+  <div class="spinner" id="spinner"></div>
+  <div id="result"></div>
+
+  <script>
+    document.getElementById('searchBtn').addEventListener('click', async () => {
+      const className = document.getElementById('classSelect').value;
+      const studentName = document.getElementById('studentName').value.trim();
+      const resultDiv = document.getElementById('result');
+      const spinner = document.getElementById('spinner');
+      resultDiv.innerHTML = "";
+
+      if (!studentName) {
+        resultDiv.innerHTML = '<p class="error">Please enter a student name.</p>';
+        return;
+      }
+
+      spinner.style.display = 'block'; // Show spinner
+
+      const baseUrl = "https://script.google.com/macros/s/AKfycbzxW164tEJ6JwlrofkiuIfyvGJmRI059Ym9DIovB8ZaDPKvQHnsBVFKFAhOQPwkmfN9/exec";
+      const url = `${baseUrl}?name=${encodeURIComponent(studentName)}${className ? `&class=${encodeURIComponent(className)}` : ''}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        spinner.style.display = 'none'; // Hide spinner
+
+        if (data.error) {
+          resultDiv.innerHTML = `<p class="error">${data.error}</p>`;
+        } else {
+          let tableHTML = `
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Class</th>
+                  <th>Roll No.</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+
+          for (const student of data) {
+            tableHTML += `
+              <tr>
+                <td>${student['Name'] || ''}</td>
+                <td>${student['Class'] || ''}</td>
+                <td>${student['Roll No.'] || ''}</td>
+              </tr>
+            `;
+          }
+
+          tableHTML += '</tbody></table>';
+          resultDiv.innerHTML = tableHTML;
+        }
+      } catch (err) {
+        console.error(err);
+        spinner.style.display = 'none'; // Hide spinner on error
+        resultDiv.innerHTML = '<p class="error">Failed to fetch data.</p>';
+      }
+    });
+  </script>
+</body>
+</html>
